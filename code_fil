@@ -1,0 +1,87 @@
+mport pandas as pd
+import numpy as np
+import seaborn; seaborn.set()
+import matplotlib.pyplot as plt 
+from datetime import datetime,date,time
+import holidays
+import math
+
+#importing library
+
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+#importing data 
+input_df=pd.read_csv("clean_data_2017.csv") 
+
+# changing the column name and all in lowercase
+input_df = input_df.rename(columns = {"Time":"time","Var1": "co2", "Var2": "rh","Var3": "temp"})
+input_df.set_index('time',inplace=False)
+
+# Summary statistics of the dataset.
+input_df.head()
+
+input_df['co2_8m']=input_df['co2'].rolling(8).mean()
+
+##Creating the data frame 
+input_df_8min0=input_df[0:1]
+input_df_8min1=input_df[1::8]
+input_df_8m= pd.concat([input_df_8min0,input_df_8min1], axis=0)
+del input_df_8m['rh']
+del input_df_8m['temp']
+##Numerator carbondioxide for 8m
+input_df_8m['co2_8m_diff']=(input_df_8m['co2_8m'] - input_df_8m['co2_8m'].shift(1))
+input_df_8m['co2_8m_diff'].fillna(0, inplace=True)
+#
+## creating the denomenator, index difference
+input_df_8m['index_col_8m'] = input_df_8m.index
+input_df_8m['Delta_8m']=(input_df_8m['index_col_8m'] - input_df_8m['index_col_8m'].shift(1))
+input_df_8m['Delta_8m'].fillna(0, inplace=True)
+#
+##finding the slope and then the angle
+#
+input_df_8m['tan_theta_8m_co2']= (input_df_8m['co2_8m_diff'])/(input_df_8m['Delta_8m'])
+input_df_8m['tan_theta_8m_co2'].fillna(0, inplace=True)
+input_df_8m['theta_8m_co2']= np.arctan(input_df_8m['tan_theta_8m_co2'])
+input_df_8m['theta_8m_co2'].fillna(0, inplace=True)
+input_df_8m['theta_8m_co2']= np.degrees(input_df_8m['theta_8m_co2'])
+#second derivative 
+input_df_8m['co2_8m_sec_diff']=(input_df_8m['tan_theta_8m_co2'] - input_df_8m['tan_theta_8m_co2'].shift(1))
+input_df_8m['co2_8m_sec_diff'].fillna(0, inplace=True)
+##finding the slope and then the angle
+input_df_8m['sec_tan_theta_8m_co2']= (input_df_8m['co2_8m_sec_diff'])/(input_df_8m['Delta_8m'])
+input_df_8m['sec_tan_theta_8m_co2'].fillna(0, inplace=True)
+input_df_8m['sec_theta_8m_co2']= np.arctan(input_df_8m['sec_tan_theta_8m_co2'])
+input_df_8m['sec_theta_8m_co2'].fillna(0, inplace=True)
+input_df_8m['sec_theta_8m_co2']= np.degrees(input_df_8m['sec_theta_8m_co2'])
+
+#THIRD DERIVATIVE
+input_df_8m['co2_8m_third_diff']=(input_df_8m['sec_tan_theta_8m_co2'] - input_df_8m['sec_tan_theta_8m_co2'].shift(1))
+input_df_8m['co2_8m_third_diff'].fillna(0, inplace=True)
+##finding the slope and then the angle
+input_df_8m['third_tan_theta_8m_co2']= (input_df_8m['co2_8m_third_diff'])/(input_df_8m['Delta_8m'])
+input_df_8m['third_tan_theta_8m_co2'].fillna(0, inplace=True)
+input_df_8m['third_theta_8m_co2']= np.arctan(input_df_8m['third_tan_theta_8m_co2'])
+input_df_8m['third_theta_8m_co2'].fillna(0, inplace=True)
+input_df_8m['third_theta_8m_co2']= np.degrees(input_df_8m['third_theta_8m_co2'])
+
+
+from scipy import stats
+input_df_8m_pca_norm=stats.zscore(input_df_8m_pca)
+
+from sklearn.decomposition import PCA
+pca = PCA(n_components=2)
+pca.fit(input_df_8m_pca)
+x_pca=pca.transform(input_df_8m_pca)
+input_df_8m_pca.shape
+x_pca.shape
+plt.figure(figsize=(8,6))
+plt.scatter(x_pca[:,0],x_pca[:,1],cmap='rainbow')
+plt.xlabel('First principal component')
+plt.ylabel('Second Principal Component')
+print(pca.explained_variance_ratio_)
+print(pca.singular_values_)
+
+
+
